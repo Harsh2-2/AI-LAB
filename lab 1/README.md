@@ -26,17 +26,22 @@ Given an initial state of the 8-puzzle, the objective is to transform it into th
 - C++
 
 ### Data Structures Used
+`std::vector` for matrix representation of the puzzle
+`std::stack` for DFS
+`std::queue` for BFS
+`std::vector` as a closed list to prevent revisiting states
 
-- `array` are used for matrix representation of the puzzle
-- `set and string` are used to prevent revisiting states
 
 ### Functions
 
-- `serialize()` — keeps track of the already visited state
-- `isGoal()` — Checks if the current state is in the solution state 
-- `printBoard()` — prints the current state of the board
-- `dfs()` — This function is used to make the move by recursively calling of itself and backtrack in the process
-
+`printNode(matrix node)` — Prints the current state of the puzzle
+`checkSame(matrix a, matrix b)` — Compares two puzzle states
+`move()` — Moves the blank tile to a new position
+`findZero()` — Locates the position of the blank tile
+`genChildren()` — Generates all valid children states from a current state
+`presentInClosedList()` — Checks if a state has already been visited
+`DFS()` — Runs Depth-First Search
+`BFS()`— Runs Breadth-First Search
 
 ---
 
