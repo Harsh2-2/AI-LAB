@@ -1,2 +1,2 @@
 # AI-LAB
-Eight puzzle problem 
+This repository contains the lab work of artificial intelligence
