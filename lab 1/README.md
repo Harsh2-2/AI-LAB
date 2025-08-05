@@ -4,7 +4,7 @@ This project implements a solution to the classic **8-puzzle problem** using **D
 
 ## Problem Statement
 
-Given an initial state of the 8-puzzle, the objective is to transform it into the goal state using a series of legal moves (up, down, left, right) where the empty tile (represented by `0`) can slide into adjacent positions. This implementation checks whether the goal can be reached from the initial configuration using **DFS** and **BFS** traversal techniques.
+Given an initial state of the 8-puzzle, the objective is to transform it into the goal state using a series of legal moves (up, down, left, right) where the empty tile (represented by `0`) can slide into adjacent positions. This implementation checks whether the goal can be reached from the initial configuration using **DFS** traversal techniques.
 
 ---
 
@@ -12,8 +12,7 @@ Given an initial state of the 8-puzzle, the objective is to transform it into th
 
 - Solves the 8-puzzle using:
   - **Depth-First Search (DFS)**
-  - **Breadth-First Search (BFS)**
-- Custom state representation using 2D vectors
+- Custom state representation using 2D array
 - Dynamic move generation (Up, Down, Left, Right)
 - Tracks explored nodes using a closed list
 - Simple and readable implementation
@@ -28,21 +27,16 @@ Given an initial state of the 8-puzzle, the objective is to transform it into th
 
 ### Data Structures Used
 
-- `std::vector` for matrix representation of the puzzle
-- `std::stack` for DFS
-- `std::queue` for BFS
-- `std::vector` as a closed list to prevent revisiting states
+- `array` are used for matrix representation of the puzzle
+- `set and string` are used to prevent revisiting states
 
 ### Functions
 
-- `printNode(matrix node)` — Prints the current state of the puzzle
-- `checkSame(matrix a, matrix b)` — Compares two puzzle states
-- `move()` — Moves the blank tile to a new position
-- `findZero()` — Locates the position of the blank tile
-- `genChildren()` — Generates all valid children states from a current state
-- `presentInClosedList()` — Checks if a state has already been visited
-- `DFS()` — Runs Depth-First Search
-- `BFS()` — Runs Breadth-First Search
+- `serialize()` — keeps track of the already visited state
+- `isGoal()` — Checks if the current state is in the solution state 
+- `printBoard()` — prints the current state of the board
+- `dfs()` — This function is used to make the move by recursively calling of itself and backtrack in the process
+
 
 ---
 
