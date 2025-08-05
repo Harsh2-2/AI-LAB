@@ -1,104 +1,177 @@
 #include <iostream>
-#include <set>
-#include <string>
-#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+
 using namespace std;
+typedef vector<vector<int>> matrix;
+typedef vector<int> position;
 
-const int N = 3;
-set<string> visited;
 
-int goal[N][N] = {
-    {1, 2, 3},
-    {4, 5, 6},
-    {7, 8, 0}
-};
 
-// Serialize board state into a string
-string serialize(int board[N][N]) {
-    string s = "";
-    for (int i = 0; i < N; i++)
-        for (int j = 0; j < N; j++)
-            s += to_string(board[i][j]);
-    return s;
+void printNode(matrix node) {
+    for(int i = 0; i<node.size(); i++){
+        for(int j = 0; j<node[0].size(); j++){
+            cout<<node[i][j]<<" ";
+        }
+        cout<<'\n';
+    }
 }
 
-// Check if the current state is the goal
-bool isGoal(int board[N][N]) {
-    for (int i = 0; i < N; i++)
-        for (int j = 0; j < N; j++)
-            if (board[i][j] != goal[i][j])
+bool checkSame(matrix problem, matrix solution) {
+    for(int i = 0; i<problem.size(); i++){
+        for(int j = 0; j<problem[0].size(); j++){
+            if(problem[i][j] != solution[i][j])
                 return false;
+        }
+    }
     return true;
 }
 
-// Print current state
-void printBoard(int board[N][N]) {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++)
-            cout << board[i][j] << " ";
-        cout << endl;
-    }
-    cout << "-----------" << endl;
+matrix move(matrix node, position zero_position, position swap_position ){
+    node[zero_position[0]][zero_position[1]] = node[swap_position[0]][swap_position[1]];
+    node[swap_position[0]][swap_position[1]] = 0;
+    return node;
 }
 
-// Recursive DFS
-void dfs(int board[N][N], int i_blank, int j_blank) {
-    string state = serialize(board);
-    if (visited.count(state)) return;
-
-    visited.insert(state);
-
-    if (isGoal(board)) {
-        cout << "Goal Reached:\n";
-        printBoard(board);
-        return;
-    }
-
-    // Move Up
-    if (i_blank - 1 >= 0) {
-        swap(board[i_blank][j_blank], board[i_blank - 1][j_blank]);
-        dfs(board, i_blank - 1, j_blank);
-        swap(board[i_blank][j_blank], board[i_blank - 1][j_blank]);  // backtrack
-    }
-
-    // Move Down
-    if (i_blank + 1 < N) {
-        swap(board[i_blank][j_blank], board[i_blank + 1][j_blank]);
-        dfs(board, i_blank + 1, j_blank);
-        swap(board[i_blank][j_blank], board[i_blank + 1][j_blank]);  // backtrack
-    }
-
-    // Move Left
-    if (j_blank - 1 >= 0) {
-        swap(board[i_blank][j_blank], board[i_blank][j_blank - 1]);
-        dfs(board, i_blank, j_blank - 1);
-        swap(board[i_blank][j_blank], board[i_blank][j_blank - 1]);  // backtrack
-    }
-
-    // Move Right
-    if (j_blank + 1 < N) {
-        swap(board[i_blank][j_blank], board[i_blank][j_blank + 1]);
-        dfs(board, i_blank, j_blank + 1);
-        swap(board[i_blank][j_blank], board[i_blank][j_blank + 1]);  // backtrack
-    }
-}
-
-int main() {
-    int board[N][N];
-    int i_blank = 0, j_blank = 0;
-
-    cout << "Enter the 3x3 board (use 0 for the blank space):\n";
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            cin >> board[i][j];
-            if (board[i][j] == 0) {
-                i_blank = i;
-                j_blank = j;
-            }
+vector<int> findZero(matrix node){
+    position position = {-1,-1};
+    for(int i = 0; i<node.size(); i++){
+        for(int j = 0; j<node[0].size(); j++){
+            if(node[i][j] == 0){
+                position[0] = i;
+                position[1] = j;
+            }    
         }
     }
+    return position;
+}
 
-    dfs(board, i_blank, j_blank);
+vector<matrix> genChildren(matrix node){
+    position position_zero = findZero(node);
+    position position_swap = {-1,-1};
+    vector<matrix> children;
+
+    // Upper move
+    if(position_zero[0] - 1 >= 0){
+        position_swap[0] = position_zero[0] - 1;
+        position_swap[1] = position_zero[1];
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+    // Down move
+    if(position_zero[0] + 1 < node.size()){
+        position_swap[0] = position_zero[0] + 1;
+        position_swap[1] = position_zero[1];
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+
+    // Left move
+    if(position_zero[1] - 1 >= 0){
+        position_swap[0] = position_zero[0];
+        position_swap[1] = position_zero[1] - 1;
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+
+    // Right move
+    if(position_zero[1] + 1 < node[0].size()){
+        position_swap[0] = position_zero[0];
+        position_swap[1] = position_zero[1] + 1;
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+    return children;    
+        
+}
+
+bool presentInClosedList(matrix node, vector<matrix> list){
+    for(int i = 0; i < list.size(); i++){
+        
+        if(checkSame(node,list[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
+void DFS(matrix problem, matrix solution){
+    stack<matrix> node_stack;
+    node_stack.push(problem);
+    vector<matrix> closed_list;
+    matrix livenode;
+    
+    
+    while(!node_stack.empty()){
+        livenode = node_stack.top();
+        node_stack.pop();
+        
+        if(checkSame(livenode, solution)){
+            cout<<"Solution found!!";
+            return;
+        }
+        
+        vector<matrix> children = genChildren(livenode);
+        closed_list.push_back(livenode);
+        
+        for(int i = 0; i < children.size(); i++)
+        {
+            if(!presentInClosedList(children[i],closed_list))
+                node_stack.push(children[i]);
+            
+        }
+
+        
+    }
+    cout<<"No possible Solution found";
+
+
+}
+
+void BFS(matrix problem, matrix solution){
+    queue<matrix> node_queue;
+    node_queue.push(problem);
+    vector<matrix> closed_list;
+    matrix livenode;
+
+    while (!node_queue.empty())
+    {
+       livenode = node_queue.front();
+       node_queue.pop();
+
+       if(checkSame(livenode, solution)){
+            cout<<"Solution found!!";
+            return;
+        }
+
+        vector<matrix> children = genChildren(livenode);
+        closed_list.push_back(livenode);
+        
+        for(int i = 0; i < children.size(); i++)
+        {
+            if(!presentInClosedList(children[i],closed_list))
+                node_queue.push(children[i]);
+            
+        }
+
+
+    }
+
+    cout<<"No possible Solution found";
+    
+}
+
+
+int main() {
+
+    matrix solution = {{1,2,3},{4,5,6},{7,8,0}}; // Zero is represented by empty
+    matrix problem = {{1,2,3},{4,5,6},{7,0,8}};
+    
+    
+    DFS(problem,solution);
+
+
 
     return 0;
 }
