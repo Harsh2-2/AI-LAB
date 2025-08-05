@@ -1,99 +1,104 @@
 #include <iostream>
-#include <vector>
 #include <set>
-#include <stack>
-
+#include <string>
+#include <algorithm>
 using namespace std;
 
-// Define the dimensions of the puzzle
-#define N 3
+const int N = 3;
+set<string> visited;
 
-// Structure to store a state of the puzzle
-struct PuzzleState {
-    vector<vector<int>> board;  
-    int x, y;  
-    int depth; 
-
-    PuzzleState(vector<vector<int>> b, int i, int j, int d) : board(b), x(i), y(j), depth(d) {}
+int goal[N][N] = {
+    {1, 2, 3},
+    {4, 5, 6},
+    {7, 8, 0}
 };
 
-// Possible moves: Left, Right, Up, Down
-int row[] = {0, 0, -1, 1};
-int col[] = {-1, 1, 0, 0};
-
-// Function to check if a given state is the goal state
-bool isGoalState(vector<vector<int>>& board) {
-    vector<vector<int>> goal = {{1, 2, 3}, {4, 5, 6}, {7, 8, 0}};
-    return board == goal;
+// Serialize board state into a string
+string serialize(int board[N][N]) {
+    string s = "";
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            s += to_string(board[i][j]);
+    return s;
 }
 
-// Function to check if a move is valid
-bool isValid(int x, int y) {
-    return (x >= 0 && x < N && y >= 0 && y < N);
+// Check if the current state is the goal
+bool isGoal(int board[N][N]) {
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            if (board[i][j] != goal[i][j])
+                return false;
+    return true;
 }
 
-// Function to print the board
-void printBoard(vector<vector<int>>& board) {
-    for (auto& row : board) {
-        for (auto& num : row)
-            cout << num << " ";
+// Print current state
+void printBoard(int board[N][N]) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++)
+            cout << board[i][j] << " ";
         cout << endl;
     }
-    cout << "--------" << endl;
+    cout << "-----------" << endl;
 }
 
-// Depth-First Search to solve the 8-puzzle problem
-void solvePuzzleDFS(vector<vector<int>>& start, int x, int y) {
-    stack<PuzzleState> st;
-    set<vector<vector<int>>> visited;
-    
-    st.push(PuzzleState(start, x, y, 0));
-    visited.insert(start);
+// Recursive DFS
+void dfs(int board[N][N], int i_blank, int j_blank) {
+    string state = serialize(board);
+    if (visited.count(state)) return;
 
-    while (!st.empty()) {
-        PuzzleState curr = st.top();
-        st.pop();
+    visited.insert(state);
 
-        // Print the current board
-        cout << "Depth: " << curr.depth << endl;
-        printBoard(curr.board);
+    if (isGoal(board)) {
+        cout << "Goal Reached:\n";
+        printBoard(board);
+        return;
+    }
 
-        // Check if goal state is reached
-        if (isGoalState(curr.board)) {
-            cout << "Goal state reached at depth " << curr.depth << endl;
-            return;
-        }
+    // Move Up
+    if (i_blank - 1 >= 0) {
+        swap(board[i_blank][j_blank], board[i_blank - 1][j_blank]);
+        dfs(board, i_blank - 1, j_blank);
+        swap(board[i_blank][j_blank], board[i_blank - 1][j_blank]);  // backtrack
+    }
 
-        // Explore possible moves
-        for (int i = 0; i < 4; i++) {
-            int newX = curr.x + row[i];
-            int newY = curr.y + col[i];
+    // Move Down
+    if (i_blank + 1 < N) {
+        swap(board[i_blank][j_blank], board[i_blank + 1][j_blank]);
+        dfs(board, i_blank + 1, j_blank);
+        swap(board[i_blank][j_blank], board[i_blank + 1][j_blank]);  // backtrack
+    }
 
-            if (isValid(newX, newY)) {
-                vector<vector<int>> newBoard = curr.board;
-                swap(newBoard[curr.x][curr.y], newBoard[newX][newY]);
+    // Move Left
+    if (j_blank - 1 >= 0) {
+        swap(board[i_blank][j_blank], board[i_blank][j_blank - 1]);
+        dfs(board, i_blank, j_blank - 1);
+        swap(board[i_blank][j_blank], board[i_blank][j_blank - 1]);  // backtrack
+    }
 
-                // If this state has not been visited before, push to stack
-                if (visited.find(newBoard) == visited.end()) {
-                    visited.insert(newBoard);
-                    st.push(PuzzleState(newBoard, newX, newY, curr.depth + 1));
-                }
+    // Move Right
+    if (j_blank + 1 < N) {
+        swap(board[i_blank][j_blank], board[i_blank][j_blank + 1]);
+        dfs(board, i_blank, j_blank + 1);
+        swap(board[i_blank][j_blank], board[i_blank][j_blank + 1]);  // backtrack
+    }
+}
+
+int main() {
+    int board[N][N];
+    int i_blank = 0, j_blank = 0;
+
+    cout << "Enter the 3x3 board (use 0 for the blank space):\n";
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            cin >> board[i][j];
+            if (board[i][j] == 0) {
+                i_blank = i;
+                j_blank = j;
             }
         }
     }
 
-    cout << "No solution found (DFS Brute Force reached depth limit)" << endl;
-}
-
-// Driver Code
-int main() {
-    vector<vector<int>> start = {{1, 2, 3}, {4, 0, 5}, {6, 7, 8}};
-    int x = 1, y = 1; 
-
-    cout << "Initial State: " << endl;
-    printBoard(start);
-
-    solvePuzzleDFS(start, x, y);
+    dfs(board, i_blank, j_blank);
 
     return 0;
 }
