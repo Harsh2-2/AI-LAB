@@ -1,116 +1,190 @@
-
 #include <iostream>
+#include <vector>
+#include <queue>
 using namespace std;
 
-string goal = "123456780";   // Goal state (0 = blank)
+typedef vector<vector<int>> matrix;
+typedef vector<int> position;
 
-// Function to count misplaced tiles (heuristic)
-int heuristic(string s) {
-    int h = 0;
-    for (int i = 0; i < 9; i++) {
-        if (s[i] != '0' && s[i] != goal[i]) h++;
-    }
-    return h;
-}
 
-// Function to print puzzle state in 3x3 grid
-void printState(string s) {
-    for (int i = 0; i < 9; i++) {
-        cout << s[i] << " ";
-        if (i % 3 == 2) cout << endl;
-    }
-    cout << endl;
-}
+matrix SOLUTION = {{1,2,3},{4,5,6}, {7,8,0}};
+int hValue(matrix node);
 
-// Function to generate all possible moves
-vector<string> getNextStates(string s) {
-    vector<string> nextStates;
-    int pos = s.find('0'); // blank position
-    int x = pos / 3, y = pos % 3;
+class Compare{
+    public: 
+        bool operator()(matrix a, matrix b)
+        {
+            if(hValue(a) > hValue(b)){
+                return true;
+            }
+            return false;
+        }
 
-    // possible moves (up, down, left, right)
-    int dx[4] = {-1, 1, 0, 0};
-    int dy[4] = {0, 0, -1, 1};
+};
 
-    for (int k = 0; k < 4; k++) {
-        int nx = x + dx[k];
-        int ny = y + dy[k];
-        if (nx >= 0 && nx < 3 && ny >= 0 && ny < 3) {
-            string t = s;
-            swap(t[pos], t[nx * 3 + ny]);
-            nextStates.push_back(t);
+int hValue(matrix node)
+{
+    int heuristic = 0;
+
+
+    // Number of wrong tiles heuristic.
+    for(int i = 0; i < node.size(); i++){
+        for(int j = 0; j < node.size(); j++){
+            if(node[i][j] != SOLUTION[i][j])
+                heuristic++;
         }
     }
-    return nextStates;
+
+    // Distance heuristic.
+    // for(int i = 0; i< node.size(); i++){
+    //     for(int j = 0; j< node.size(); j++){
+    //         for(int x = 0; x<node.size(); x++){
+    //             for(int y = 0; y < node.size(); y++){
+    //                 if(SOLUTION[i][j] == node[x][y])
+    //                     heuristic += abs(i-x) + abs(j - y);
+    //             }
+    //         }
+
+    //     }
+    // }
+    return heuristic;
+
+    
 }
 
-// Node structure for priority queue
-struct Node {
-    string state;
-    int g, h;    // g = steps, h = heuristic
-    Node* parent;
-};
-
-// Comparison for Best First (only heuristic matters)
-struct Compare {
-    bool operator()(Node* a, Node* b) {
-        return a->h > b->h;
-    }
-};
-
-// Function to print solution path
-void printPath(Node* node) {
-    vector<string> path;
-    while (node != NULL) {
-        path.push_back(node->state);
-        node = node->parent;
-    }
-    reverse(path.begin(), path.end());
-
-    cout << "\nSolution Path:\n";
-    for (string s : path) {
-        printState(s);
+void printNode(matrix node) {
+    for(int i = 0; i<node.size(); i++){
+        for(int j = 0; j<node[0].size(); j++){
+            cout<<node[i][j]<<" ";
+        }
+        cout<<'\n';
     }
 }
 
-void bestFirstSearch(string start) {
-    priority_queue<Node*, vector<Node*>, Compare> pq;
-    unordered_set<string> visited;
+bool checkSame(matrix problem, matrix solution) {
+    for(int i = 0; i<problem.size(); i++){
+        for(int j = 0; j<problem[0].size(); j++){
+            if(problem[i][j] != solution[i][j])
+                return false;
+        }
+    }
+    return true;
+}
 
-    Node* root = new Node{start, 0, heuristic(start), NULL};
-    pq.push(root);
+matrix move(matrix node, position zero_position, position swap_position ){
+    node[zero_position[0]][zero_position[1]] = node[swap_position[0]][swap_position[1]];
+    node[swap_position[0]][swap_position[1]] = 0;
+    return node;
+}
 
-    while (!pq.empty()) {
-        Node* cur = pq.top();
-        pq.pop();
+vector<int> findZero(matrix node){
+    position position = {-1,-1};
+    for(int i = 0; i<node.size(); i++){
+        for(int j = 0; j<node[0].size(); j++){
+            if(node[i][j] == 0){
+                position[0] = i;
+                position[1] = j;
+            }    
+        }
+    }
+    return position;
+}
 
-        if (cur->state == goal) {
-            cout << "Goal reached in " << cur->g << " steps.\n";
-            printPath(cur);
+vector<matrix> genChildren(matrix node){
+    position position_zero = findZero(node);
+    position position_swap = {-1,-1};
+    vector<matrix> children;
+
+    // Upper move
+    if(position_zero[0] - 1 >= 0){
+        position_swap[0] = position_zero[0] - 1;
+        position_swap[1] = position_zero[1];
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+    // Down move
+    if(position_zero[0] + 1 < node.size()){
+        position_swap[0] = position_zero[0] + 1;
+        position_swap[1] = position_zero[1];
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+
+    // Left move
+    if(position_zero[1] - 1 >= 0){
+        position_swap[0] = position_zero[0];
+        position_swap[1] = position_zero[1] - 1;
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+
+    // Right move
+    if(position_zero[1] + 1 < node[0].size()){
+        position_swap[0] = position_zero[0];
+        position_swap[1] = position_zero[1] + 1;
+        children.push_back(move(node, position_zero, position_swap));
+    }
+
+    return children;    
+        
+}
+
+bool presentInClosedList(matrix node, vector<matrix> list){
+
+    for(int i = 0; i < list.size(); i++){
+        
+        if(checkSame(node,list[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void bestFirstSearch(matrix node){
+    priority_queue<matrix, vector<matrix>, Compare> pQueue;
+    pQueue.push(node);
+    vector<matrix> closed_list;
+    matrix livenode;
+    int count = 0;
+
+    while(!pQueue.empty()){
+        count++;
+        livenode = pQueue.top();
+        pQueue.pop();
+
+        if(checkSame(livenode, SOLUTION)){
+            cout<<"Count: "<<count<<endl;
+            cout<<"Solution found!!";
             return;
         }
 
-        if (visited.count(cur->state)) continue;
-        visited.insert(cur->state);
-
-        vector<string> nextStates = getNextStates(cur->state);
-        for (string ns : nextStates) {
-            if (!visited.count(ns)) {
-                Node* child = new Node{ns, cur->g + 1, heuristic(ns), cur};
-                pq.push(child);
-            }
+        vector<matrix> children = genChildren(livenode);
+        closed_list.push_back(livenode);
+        
+        for(int i = 0; i < children.size(); i++)
+        {
+            if(!presentInClosedList(children[i],closed_list))
+                {
+                    pQueue.push(children[i]);
+                }
+            
         }
     }
 
-    cout << "No solution found.\n";
+    cout<<"Sollution not found";
 }
 
+
 int main() {
-    string start = "125340678"; // Example starting state
-    cout << "Initial State:\n";
-    printState(start);
 
-    bestFirstSearch(start);
+    // matrix root = {{2,6,4},{7,0,3}, {5,1,8}};
+    matrix root = {{5,1,3},{4,2,6}, {7,0,8}};
 
+    bestFirstSearch(root);
+
+        
+    
+    
     return 0;
 }
